@@ -52,15 +52,19 @@ class GitHubClient:
 
     def _get(self, path: str, **params) -> dict | list:
         url = f"{_GITHUB_API}{path}"
-        with httpx.Client(timeout=self._timeout) as client:
-            resp = client.get(url, headers=self._headers, params=params)
+        try:
+            with httpx.Client(timeout=self._timeout) as client:
+                resp = client.get(url, headers=self._headers, params=params)
+        except httpx.HTTPError as exc:
+            raise ConnectionError(f"GitHub request failed: {type(exc).__name__}") from exc
         if resp.status_code == 404:
             raise KeyError(f"GitHub resource not found: {path}")
         if resp.status_code == 401:
             raise PermissionError("GitHub token is invalid or expired")
         if resp.status_code == 403:
             raise PermissionError("GitHub token lacks the required scope (needs repo:read)")
-        resp.raise_for_status()
+        if not resp.is_success:
+            raise ConnectionError(f"GitHub returned HTTP {resp.status_code}")
         return resp.json()
 
     def list_prs(self, repo: str, state: str = "open", per_page: int = 30) -> list[PRSummary]:
@@ -72,8 +76,10 @@ class GitHubClient:
             sort="updated",
             direction="desc",
         )
+        if not isinstance(data, list):
+            return []
         out = []
-        for pr in data:  # type: ignore[union-attr]
+        for pr in data:
             out.append(PRSummary(
                 number=pr["number"],
                 title=pr["title"],
@@ -90,14 +96,22 @@ class GitHubClient:
     def get_diff(self, repo: str, pr_number: int, max_bytes: int) -> str:
         """Fetch the unified diff for a pull request."""
         url = f"{_GITHUB_API}/repos/{self._org}/{repo}/pulls/{pr_number}"
-        with httpx.Client(timeout=self._timeout) as client:
-            resp = client.get(
-                url,
-                headers={**self._headers, "Accept": "application/vnd.github.diff"},
-            )
+        try:
+            with httpx.Client(timeout=self._timeout) as client:
+                resp = client.get(
+                    url,
+                    headers={**self._headers, "Accept": "application/vnd.github.diff"},
+                )
+        except httpx.HTTPError as exc:
+            raise ConnectionError(f"GitHub request failed: {type(exc).__name__}") from exc
         if resp.status_code == 404:
             raise KeyError(f"PR #{pr_number} not found in {self._org}/{repo}")
-        resp.raise_for_status()
+        if resp.status_code == 401:
+            raise PermissionError("GitHub token is invalid or expired")
+        if resp.status_code == 403:
+            raise PermissionError("GitHub token lacks the required scope (needs repo:read)")
+        if not resp.is_success:
+            raise ConnectionError(f"GitHub returned HTTP {resp.status_code}")
         diff = resp.text
         if len(diff.encode()) > max_bytes:
             raise ValueError(f"Diff for PR #{pr_number} exceeds {max_bytes // 1024} KB limit")

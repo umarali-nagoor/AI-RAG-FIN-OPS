@@ -124,17 +124,19 @@ class Platform:
                 languages=langs,
                 commit=head_commit(root),
             )
-            history = self._history(name, root, analysis)
+            # Fetch commits once and reuse for both history and indexing.
+            commits = recent_commits(root, self.settings.history_commits, self.settings.max_diff_bytes)
+            history = self._history(name, analysis, commits)
             state = RepoState(analysis, history, sig, root)
             self._states[name] = state
             if index:
-                self._index(state)
+                self._index(state, commits)
             return state
 
-    def _history(self, name: str, root: Path, analysis: RepoAnalysis) -> list[HistoryEntry]:
+    def _history(self, name: str, analysis: RepoAnalysis, commits: list) -> list[HistoryEntry]:
         out: list[HistoryEntry] = []
         calibration = self.reports.calibration(name)
-        for c in recent_commits(root, self.settings.history_commits, self.settings.max_diff_bytes):
+        for c in commits:
             try:
                 r = review_diff(self.settings, name, c.diff, analysis.statements, calibration, None)
             except Exception:  # noqa: BLE001 - one malformed historical diff must not break the repository
@@ -147,20 +149,16 @@ class Platform:
             )
         return out
 
-    def _index(self, state: RepoState) -> None:
+    def _index(self, state: RepoState, commits: list) -> None:
         a = state.analysis
         if self.kb.indexed_signature(a.repository) == state.signature:
             return
         docs = collect_docs(state.root)
-        commits = [
+        commit_entries = [
             (c, h.findings, h.gb_day)
-            for c, h in zip(
-                recent_commits(state.root, self.settings.history_commits, self.settings.max_diff_bytes),
-                state.history,
-                strict=False,
-            )
+            for c, h in zip(commits, state.history, strict=False)
         ]
-        counts = self.kb.index_repository(a, docs, commits, state.signature)
+        counts = self.kb.index_repository(a, docs, commit_entries, state.signature)
         log.info("repository indexed", extra={"repository": a.repository, **counts})
 
     def reindex(self, name: str | None = None) -> list[str]:

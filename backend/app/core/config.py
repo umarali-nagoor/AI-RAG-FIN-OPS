@@ -17,7 +17,12 @@ EmbeddingProviderName = Literal["local", "openai", "azure_openai", "watsonx"]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="FINOPS_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_prefix="FINOPS_",
+        # Resolve .env relative to this file (backend/app/core/config.py → project root is ../../..)
+        env_file=str(Path(__file__).resolve().parents[3] / ".env"),
+        extra="ignore",
+    )
 
     # --- runtime -----------------------------------------------------------------
     environment: Literal["development", "production"] = "development"

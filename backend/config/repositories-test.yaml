@@ -1,0 +1,16 @@
+# Test-only repository config.
+# Points at the icl-test-* repos cloned under backend/data/repos/.
+# Run scripts/push_all_repos.sh + trigger /admin/reindex to populate data/repos/ first.
+
+repositories:
+  - {name: icl-test-schematics-api,          description: Public Schematics REST API,              path: ../data/repos/icl-test-schematics-api}
+  - {name: icl-test-schematics-agents-api,   description: API used by Schematics agents,           path: ../data/repos/icl-test-schematics-agents-api}
+  - {name: icl-test-blueprint-api,           description: Blueprint catalogue API,                 path: ../data/repos/icl-test-blueprint-api}
+  - {name: icl-test-schematics-orchestrator, description: Job orchestration service,               path: ../data/repos/icl-test-schematics-orchestrator}
+  - {name: icl-test-schematics-sandbox,      description: Sandbox lifecycle manager,               path: ../data/repos/icl-test-schematics-sandbox}
+  - {name: icl-test-schematics-data-job,     description: Nightly data export job,                 path: ../data/repos/icl-test-schematics-data-job}
+  - {name: icl-test-schematics-job-queue-manager, description: Kafka job queue consumer,           path: ../data/repos/icl-test-schematics-job-queue-manager}
+  - {name: icl-test-schematics-job,          description: Single Terraform job runner,             path: ../data/repos/icl-test-schematics-job}
+  - {name: icl-test-schematics-ansible,      description: Ansible runner wrapper,                  path: ../data/repos/icl-test-schematics-ansible}
+  - {name: icl-test-schematics-mon,          description: Health metrics collector,                path: ../data/repos/icl-test-schematics-mon}
+  - {name: AI-RAG-PR-SAMPLE,                 description: AI RAG pipeline PR Review sample,        path: ../data/repos/AI-RAG-PR-SAMPLE}

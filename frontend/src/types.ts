@@ -114,6 +114,14 @@ export interface PRSummaryOut {
   updatedAt: string
 }
 
+export interface PricingData {
+  source: string
+  effective_from: string
+  store_and_search_usd_gb: number
+  analyze_and_alert_usd_gb: number
+  priority_insights_usd_gb: Record<string, number>
+}
+
 export interface AnalyticsRepo {
   repository: string
   riskLevel: Impact

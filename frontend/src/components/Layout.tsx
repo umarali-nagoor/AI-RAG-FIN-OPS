@@ -7,6 +7,7 @@ const NAV = [
   { to: '/pr-review',  label: '⊕  PR Review' },
   { to: '/ask',        label: '◎  Ask' },
   { to: '/analytics',  label: '▤  Platform Ranking' },
+  { to: '/pricing',    label: '＄  Pricing' },
 ]
 
 export default function Layout() {

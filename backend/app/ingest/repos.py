@@ -160,7 +160,7 @@ class RepositoryRegistry:
         return spec.root
 
     def _git_env(self) -> dict[str, str]:
-        token = self.settings.git_token
+        token = self.settings.git_token or self.settings.github_token
         if not token:
             return {}
         return {

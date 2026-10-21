@@ -6,6 +6,7 @@ import Optimize from './pages/Optimize'
 import PRReview from './pages/PRReview'
 import Ask from './pages/Ask'
 import Analytics from './pages/Analytics'
+import Pricing from './pages/Pricing'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="pr-review" element={<PRReview />} />
           <Route path="ask" element={<Ask />} />
           <Route path="analytics" element={<Analytics />} />
+          <Route path="pricing" element={<Pricing />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

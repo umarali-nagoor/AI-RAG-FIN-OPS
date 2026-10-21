@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # push_all_repos.sh
-# Creates (if missing) and pushes content for:
-#   - 5 remaining icl-test-* sample repos
-#   - 1 AI-RAG-FIN-OPS repo (full finops-copilot application)
+# Creates (if missing) and force-pushes the full git history from
+# sample-data/repos/<name> to github.com/umarali-nagoor/icl-test-<name>.
+# Also pushes the AI-RAG-FIN-OPS application repo.
 #
 # Usage:  bash scripts/push_all_repos.sh
-# Run from: finops-copilot/ directory
+# Run from: repo root directory
+# Prerequisite: gh CLI authenticated (gh auth login) and git installed.
 set -euo pipefail
 
 ORG="umarali-nagoor"
@@ -18,54 +19,58 @@ ok()   { echo -e "${GREEN}  ✓ $*${NC}"; }
 warn() { echo -e "${YELLOW}  ! $*${NC}"; }
 err()  { echo -e "${RED}  ✗ $*${NC}"; }
 
-# ── helper: create repo if it doesn't exist ──────────────────────────────────
+# ── helper: create repo on GitHub if it doesn't exist ────────────────────────
 ensure_repo() {
   local gh_name="$1" description="$2"
   if gh api "repos/${ORG}/${gh_name}" --jq '.name' &>/dev/null; then
-    warn "${gh_name} already exists on GitHub — skipping creation"
+    warn "${gh_name} already exists on GitHub"
   else
     echo "  Creating ${gh_name}..."
-    gh repo create "${ORG}/${gh_name}" --public --description "$description" 2>&1
+    gh repo create "${ORG}/${gh_name}" --public --description "$description"
     ok "Created ${gh_name}"
     sleep 2
   fi
 }
 
-# ── helper: push a local directory to a GitHub repo ──────────────────────────
-push_dir() {
+# ── helper: push FULL git history from a local repo dir to a GitHub repo ─────
+# Uses a temporary remote so it never touches the repo's existing remotes.
+push_history() {
   local src="$1" gh_name="$2"
-  local WORKDIR
-  WORKDIR="$(mktemp -d)"
+  local remote_url="https://github.com/${ORG}/${gh_name}.git"
 
-  cp -r "${src}/." "${WORKDIR}/"
-  cd "${WORKDIR}"
+  if [ ! -d "${src}/.git" ]; then
+    err "${src} has no .git directory — run scripts/init_sample_repos.sh first"
+    return 1
+  fi
 
-  git init -b main -q
-  git config user.email "finops-copilot@ibm.com"
-  git config user.name "FinOps Copilot"
-  git add -A
-  git commit -q -m "chore: initial content"
+  # Add a temporary remote (remove first if leftover from a previous run)
+  git -C "${src}" remote remove _push_tmp 2>/dev/null || true
+  git -C "${src}" remote add _push_tmp "${remote_url}"
 
-  # force-push so re-runs are idempotent
-  git remote add origin "https://github.com/${ORG}/${gh_name}.git"
-  git push -u origin main --force 2>&1 | grep -v "^remote:" || true
+  # Force-push all branches — preserves full commit history
+  git -C "${src}" push _push_tmp --all --force 2>&1 | grep -v "^remote:" || true
 
-  cd - >/dev/null
-  rm -rf "${WORKDIR}"
-  ok "Pushed ${gh_name}"
+  git -C "${src}" remote remove _push_tmp
+  ok "Pushed ${gh_name} (full history)"
 }
 
 # ════════════════════════════════════════════════════════════════════════════
 echo ""
-echo "═══ Step 1: 5 remaining icl-test-* sample repos ═══════════════════════"
+echo "═══ Pushing all 11 icl-test-* sample repos (with full git history) ════"
 echo ""
 
 SAMPLE_REPOS=(
-  "schematics-job|ICL FinOps test repo: schematics-job"
-  "schematics-job-queue-manager|ICL FinOps test repo: schematics-job-queue-manager"
-  "schematics-mon|ICL FinOps test repo: schematics-mon"
-  "schematics-orchestrator|ICL FinOps test repo: schematics-orchestrator"
-  "schematics-sandbox|ICL FinOps test repo: schematics-sandbox"
+  "ai-rag-pr-sample|AI RAG pipeline — FinOps PR Review sample"
+  "blueprint-api|Blueprint catalogue API"
+  "schematics-agents-api|API used by Schematics agents"
+  "schematics-ansible|Ansible runner wrapper"
+  "schematics-api|Public Schematics REST API"
+  "schematics-data-job|Nightly data export job"
+  "schematics-job|Single Terraform job runner"
+  "schematics-job-queue-manager|Kafka job queue consumer and scheduler"
+  "schematics-mon|Health metrics collector"
+  "schematics-orchestrator|Job orchestration service"
+  "schematics-sandbox|Sandbox lifecycle manager"
 )
 
 for entry in "${SAMPLE_REPOS[@]}"; do
@@ -75,12 +80,12 @@ for entry in "${SAMPLE_REPOS[@]}"; do
   echo ""
   echo "── ${gh_name} ──"
   ensure_repo "${gh_name}" "${desc}"
-  push_dir "${BASE}/${repo}" "${gh_name}"
+  push_history "${BASE}/${repo}" "${gh_name}"
 done
 
 # ════════════════════════════════════════════════════════════════════════════
 echo ""
-echo "═══ Step 2: AI-RAG-FIN-OPS (full application) ══════════════════════════"
+echo "═══ AI-RAG-FIN-OPS application repo ═══════════════════════════════════"
 echo ""
 
 APP_REPO="AI-RAG-FIN-OPS"
@@ -88,30 +93,16 @@ APP_DESC="FinOps Copilot for IBM Cloud Logs — RAG-powered log cost analysis, a
 
 ensure_repo "${APP_REPO}" "${APP_DESC}"
 
-# Push the finops-copilot directory — .gitignore already excludes .env,
-# .venv, node_modules, __pycache__, data/, etc.
-WORKDIR="$(mktemp -d)"
-cp -r "${APP_DIR}/." "${WORKDIR}/"
-
-cd "${WORKDIR}"
-git init -b main -q
-git config user.email "finops-copilot@ibm.com"
-git config user.name "FinOps Copilot"
-
-# Honour the project's .gitignore (double-check .env is excluded)
-if git ls-files --others --exclude-standard | grep -q "^\.env$"; then
+# Safety check: confirm .env is gitignored before pushing the application repo
+if git -C "${APP_DIR}" ls-files --others --exclude-standard | grep -q "^\.env$"; then
   err ".env would be committed — aborting for safety!"
-  rm -rf "${WORKDIR}"
   exit 1
 fi
 
-git add -A
-git commit -q -m "chore: initial release of FinOps Copilot"
-git remote add origin "https://github.com/${ORG}/${APP_REPO}.git"
-git push -u origin main --force 2>&1 | grep -v "^remote:" || true
-
-cd - >/dev/null
-rm -rf "${WORKDIR}"
+git -C "${APP_DIR}" remote remove _push_tmp 2>/dev/null || true
+git -C "${APP_DIR}" remote add _push_tmp "https://github.com/${ORG}/${APP_REPO}.git"
+git -C "${APP_DIR}" push _push_tmp --all --force 2>&1 | grep -v "^remote:" || true
+git -C "${APP_DIR}" remote remove _push_tmp
 ok "Pushed ${APP_REPO}"
 
 # ════════════════════════════════════════════════════════════════════════════

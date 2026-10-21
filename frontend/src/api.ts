@@ -47,6 +47,15 @@ export const api = {
       body: JSON.stringify({ question, repository, diff }),
     }),
 
+  reindex: (repository?: string) =>
+    request<{ reindexed: string[] }>('/admin/reindex', {
+      method: 'POST',
+      body: JSON.stringify(repository ? { repository } : {}),
+    }),
+
+  pricing: () =>
+    request<import('./types').PricingData>('/pricing'),
+
   analyticsRepositories: () =>
     request<{ repositories: import('./types').AnalyticsRepo[] }>('/analytics/repositories'),
 

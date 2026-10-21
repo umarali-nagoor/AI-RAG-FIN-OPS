@@ -10,6 +10,7 @@ os.environ.setdefault("FINOPS_NO_AUTOAPP", "1")
 
 BACKEND = Path(__file__).resolve().parents[1]
 SAMPLE = BACKEND.parent / "sample-data"
+DATA_REPOS = BACKEND / "data" / "repos"
 
 
 @pytest.fixture(scope="session")
@@ -19,7 +20,7 @@ def settings(tmp_path_factory):
     return Settings(
         _env_file=None,
         data_dir=tmp_path_factory.mktemp("data"),
-        repos_config=BACKEND / "config" / "repositories.yaml",
+        repos_config=BACKEND / "config" / "repositories-test.yaml",
         cost_reports_dir=SAMPLE / "cost-reports",
         knowledge_dir=BACKEND / "knowledge",
         static_dir=BACKEND / "no-static",
@@ -67,6 +68,15 @@ def tmp_repo(tmp_path):
 
 @pytest.fixture(scope="session", autouse=True)
 def _require_sample_repos():
-    if not (SAMPLE / "repos" / "schematics-api" / ".git").is_dir():
-        pytest.skip("run scripts/init_sample_repos.sh first")
+    if not (DATA_REPOS / "icl-test-schematics-api" / ".git").is_dir():
+        pytest.skip("icl-test-* repos not cloned — trigger /admin/reindex first")
     shutil.which("git") or pytest.skip("git not installed")
+    # Clone AI-RAG-PR-SAMPLE if not already present (public repo, no token needed)
+    target = DATA_REPOS / "AI-RAG-PR-SAMPLE"
+    if not (target / ".git").is_dir():
+        import subprocess
+        subprocess.run(
+            ["git", "clone", "--depth", "50",
+             "https://github.com/umarali-nagoor/AI-RAG-PR-SAMPLE", str(target)],
+            check=False, capture_output=True,
+        )

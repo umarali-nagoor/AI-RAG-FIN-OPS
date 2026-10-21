@@ -155,6 +155,8 @@ def create_app(settings: Settings | None = None, platform: Platform | None = Non
             raise HTTPException(404, "Repository not found on GitHub") from None
         except PermissionError as e:
             raise HTTPException(403, str(e)) from None
+        except ConnectionError as e:
+            raise HTTPException(502, str(e)) from None
         return [
             PRSummaryOut(
                 number=pr.number,
@@ -186,6 +188,8 @@ def create_app(settings: Settings | None = None, platform: Platform | None = Non
             raise HTTPException(403, str(e)) from None
         except ValueError as e:
             raise HTTPException(413, str(e)) from None
+        except ConnectionError as e:
+            raise HTTPException(502, str(e)) from None
         return {"repository": repository, "pr_number": pr_number, "diff": diff}
 
     @api.get("/pricing")

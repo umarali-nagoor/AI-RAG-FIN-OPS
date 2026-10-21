@@ -42,11 +42,14 @@ function PRList({
   if (loading) return <div style={{ padding: '0.5rem' }}><Spinner /></div>
   if (error) {
     const isNotConfigured = error.includes('501') || error.includes('not configured')
+    const isAuthError = error.includes('403') || error.includes('401') || error.includes('token') || error.includes('expired') || error.includes('credentials')
     return (
       <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', padding: '0.5rem' }}>
         {isNotConfigured
           ? <>GitHub not configured — add <code>FINOPS_GITHUB_TOKEN</code> and <code>FINOPS_GITHUB_ORG</code> to your <code>.env</code> file, or paste a diff manually below.</>
-          : <ErrorBox message={error} />}
+          : isAuthError
+            ? <>GitHub token is invalid or expired — update <code>FINOPS_GITHUB_TOKEN</code> in your <code>.env</code> file with a valid PAT (<code>repo:read</code> scope), then restart the server. You can still paste a diff manually below.</>
+            : <ErrorBox message={error} />}
       </div>
     )
   }

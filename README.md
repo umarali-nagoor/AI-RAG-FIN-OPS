@@ -4,32 +4,155 @@
 
 ---
 
-## Quick start (local, offline mode)
+## End-to-end quick start
+
+### Prerequisites
+
+| Tool | Version | Notes |
+|------|---------|-------|
+| Python | 3.11 | `python3.11 --version` |
+| Node.js | 18+ | only needed to rebuild the UI |
+| git | any | must be on `PATH` |
+| gh CLI | any | for `push_all_repos.sh` |
+| GitHub PAT | `repo:read` scope | for cloning private repos |
+
+---
+
+### Step 1 — Configure `.env`
 
 ```bash
-# 1. Clone and prepare the environment
-cd finops-copilot/backend
-/opt/homebrew/bin/python3.11 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-
-# 2. Seed sample repositories (synthetic data, safe to re-run)
-../scripts/init_sample_repos.sh
-
-# 3. Run the API server
-FINOPS_COST_REPORTS_DIR=../sample-data/cost-reports \
-  .venv/bin/uvicorn app.main:app_factory --factory --host 127.0.0.1 --port 8080
-
-# 4. Open the UI
-open http://127.0.0.1:8080
-# or use the Swagger docs at http://127.0.0.1:8080/docs
+cp .env.example .env
 ```
 
-### Quick smoke test
+Edit `.env` and fill in:
+
+```dotenv
+# GitHub — required for repo cloning and PR review
+FINOPS_GITHUB_TOKEN=ghp_your_token_here   # PAT with repo:read scope
+FINOPS_GITHUB_ORG=umarali-nagoor
+
+# IBM Cloud Logs — required for live cost data (optional for local dev)
+IBM_CLOUD_API_KEY=your-ibm-cloud-api-key
+ICL_INSTANCE_ID=your-icl-instance-guid
+ICL_REGION=us-south
+
+# LLM provider — leave as offline to run without any model
+FINOPS_LLM_PROVIDER=offline
+# Uncomment one of these for AI-generated narratives:
+# FINOPS_LLM_PROVIDER=watsonx
+# FINOPS_WATSONX_API_KEY=...
+# FINOPS_WATSONX_PROJECT_ID=...
+```
+
+---
+
+### Step 2 — Install Python dependencies
 
 ```bash
-curl -s -X POST http://127.0.0.1:8080/analyze-repository \
+cd backend
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+---
+
+### Step 3 — Start the backend
+
+```bash
+cd backend
+source .venv/bin/activate
+uvicorn app.main:app_factory --factory --host 127.0.0.1 --port 8080
+```
+
+On startup the server will:
+- Load the knowledge base (standards, IBM guidance, cost reports)
+- Register all 11 `icl-test-*` repos from `config/repositories.yaml`
+
+Expected log line: `knowledge base ready`
+
+---
+
+### Step 4 — Clone repos from GitHub (first run or after new repos added)
+
+With the server running, trigger a full clone + index of all 11 repos:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/api/admin/reindex \
+  -H "Content-Type: application/json" \
+  -d '{}' | python3 -m json.tool
+```
+
+Or use the **⬇ Pull All Repos** button in the UI at `http://127.0.0.1:8080`.
+
+Each repo is cloned into `backend/data/repos/icl-test-<name>/`. This only re-clones on subsequent calls if `sync=True` is set (the Pull button always sets it).
+
+---
+
+### Step 5 — Open the UI
+
+```bash
+open http://127.0.0.1:8080
+```
+
+| Page | What to do |
+|------|-----------|
+| **Repository Picker** | Click **⬇ Pull** on a repo, then **Analyze** |
+| **Analyze** | See risk level, cost drivers, findings |
+| **Optimize** | Ranked recommendations with code suggestions |
+| **PR Review** | Paste a git diff to get PASS / WARN / BLOCK |
+| **Ask** | Ask questions like *"Which repo costs most?"* |
+| **Analytics** | Side-by-side cost ranking across all repos |
+
+---
+
+### Step 6 — Smoke test via curl
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/api/analyze-repository \
   -H 'Content-Type: application/json' \
-  -d '{"repository":"schematics-api"}' | python3 -m json.tool
+  -d '{"repository":"icl-test-schematics-api"}' | python3 -m json.tool
+```
+
+Expected: `"riskLevel": "HIGH"` with findings in `workflow/reconciler.go`.
+
+---
+
+### Step 7 (optional) — Sync live cost data from IBM Cloud Logs
+
+Replace the synthetic cost reports with real billing data:
+
+```bash
+python scripts/sync_cost_reports.py \
+  --instance-id  $ICL_INSTANCE_ID \
+  --region       $ICL_REGION \
+  --range        last_30_days \
+  --out-dir      sample-data/cost-reports \
+  --mapping      config/icl_applications.yaml \
+  --reload-url   http://127.0.0.1:8080/api/admin/reload-cost-reports
+```
+
+The server hot-reloads the new data — no restart needed.
+
+---
+
+### Running via Docker (alternative to steps 2–3)
+
+```bash
+docker-compose up
+```
+
+Builds the image, mounts `sample-data/cost-reports`, and starts the server on `http://127.0.0.1:8080`. Then trigger reindex (Step 4) to clone repos.
+
+---
+
+### Running tests
+
+```bash
+cd backend
+source .venv/bin/activate
+python -m pytest           # 69 tests, ~5 s
+ruff check app tests       # lint
 ```
 
 ---
@@ -97,19 +220,29 @@ FINOPS_OPENAI_API_KEY=sk-...
 
 ---
 
-## Adding real repositories
+## Adding repositories
 
-Edit [`backend/config/repositories.yaml`](backend/config/repositories.yaml):
+Edit [`backend/config/repositories.yaml`](backend/config/repositories.yaml) — two options:
 
+**Option A — GitHub shorthand (recommended):**
+```yaml
+github_repos:
+  - org: umarali-nagoor
+    repos:
+      - name: icl-test-my-service
+        description: "My service"
+```
+
+**Option B — explicit URL:**
 ```yaml
 repositories:
   - name: my-service
-    description: "My production microservice"
-    url: "https://github.com/my-org/my-service"
+    description: "My production service"
+    url: https://github.com/my-org/my-service
     branch: main
 ```
 
-Place IBM Cloud Logs usage export CSV files in `FINOPS_COST_REPORTS_DIR` (one file per repository, named `<repository>.csv`).
+Then trigger a reindex: `POST /api/admin/reindex` or click **⬇ Pull All Repos** in the UI.
 
 ---
 
