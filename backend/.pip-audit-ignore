@@ -1,0 +1,28 @@
+# pip-audit ignorelist for finops-copilot
+#
+# CVE-2026-45829 / GHSA-f4j7-r4q5-qw2c  (PYSEC-2026-311)
+#   Pre-auth code injection via ChromaDB's /api/v2/... REST server endpoint.
+#   Affects ChromaDB running in server mode (chromadb.HttpClient / chromadb server CLI).
+#   We use EphemeralClient / PersistentClient (in-process, no network server).
+#   No fix version exists upstream as of the last audit run.
+#   Revisit when chromadb > 1.5.9 ships with a patch.
+#
+PYSEC-2026-311 chromadb
+
+# CVE-2026-45830 / GHSA-2wm9-hf6c-p5cr  (PYSEC-2026-3813)
+#   Lack of authorisation validation in ChromaDB server multi-tenant REST API.
+#   Requires ChromaDB running as a network server. Not applicable — embedded mode only.
+#
+PYSEC-2026-3813 chromadb
+
+# CVE-2026-45831 / GHSA-xph7-9rjv-w5fr  (PYSEC-2026-3815)
+#   SimpleRBACAuthorizationProvider bypasses tenant isolation in ChromaDB server.
+#   Requires server mode with RBAC enabled. Not applicable — embedded mode only.
+#
+PYSEC-2026-3815 chromadb
+
+# CVE-2026-45833 / GHSA-36p7-vc44-83pf  (PYSEC-2026-3814)
+#   Auth'd code injection via malicious model repo in ChromaDB server API.
+#   Requires a remote ChromaDB server endpoint. Not applicable — embedded mode only.
+#
+PYSEC-2026-3814 chromadb

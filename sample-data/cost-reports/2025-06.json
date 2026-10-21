@@ -1,0 +1,17 @@
+{
+  "period": "2025-06",
+  "total_usd_month": 18400,
+  "notes": "Synthetic sample data. schematics-api grew after the reconciler release (see INC-2025-031).",
+  "services": {
+    "schematics-api":               {"gb_per_day": 310, "usd_month": 4600, "by_severity_gb_day": {"INFO": 235, "ERROR": 50, "WARNING": 25}},
+    "schematics-orchestrator":      {"gb_per_day": 170, "usd_month": 4400, "by_severity_gb_day": {"INFO": 50, "ERROR": 110, "WARNING": 10}},
+    "schematics-job-queue-manager": {"gb_per_day": 125, "usd_month": 2150, "by_severity_gb_day": {"INFO": 115, "ERROR": 5, "WARNING": 5}},
+    "schematics-agents-api":        {"gb_per_day": 60,  "usd_month": 1250, "by_severity_gb_day": {"INFO": 33, "ERROR": 24, "WARNING": 3}},
+    "schematics-data-job":          {"gb_per_day": 75,  "usd_month": 1350, "by_severity_gb_day": {"INFO": 73, "ERROR": 1, "WARNING": 1}},
+    "blueprint-api":                {"gb_per_day": 32,  "usd_month": 600,  "by_severity_gb_day": {"INFO": 27, "ERROR": 3, "WARNING": 2}},
+    "schematics-job":               {"gb_per_day": 40,  "usd_month": 700,  "by_severity_gb_day": {"INFO": 37, "ERROR": 2, "WARNING": 1}},
+    "schematics-sandbox":           {"gb_per_day": 26,  "usd_month": 470,  "by_severity_gb_day": {"INFO": 23, "ERROR": 2, "WARNING": 1}},
+    "schematics-ansible":           {"gb_per_day": 30,  "usd_month": 550,  "by_severity_gb_day": {"INFO": 26, "ERROR": 3, "WARNING": 1}},
+    "schematics-mon":               {"gb_per_day": 20,  "usd_month": 250,  "by_severity_gb_day": {"INFO": 5, "ERROR": 2, "WARNING": 13}}
+  }
+}

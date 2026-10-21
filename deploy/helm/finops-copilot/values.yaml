@@ -1,0 +1,96 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Default values for finops-copilot Helm chart.
+# Override with: helm install finops-copilot ./deploy/helm/finops-copilot -f my-values.yaml
+# ──────────────────────────────────────────────────────────────────────────────
+
+replicaCount: 1
+
+image:
+  repository: ""        # e.g. registry.example.com/finops-copilot
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Name of an existing Secret that holds FINOPS_API_KEYS (and optionally LLM keys).
+# Create it with:
+#   kubectl create secret generic finops-secrets \
+#     --from-literal=FINOPS_API_KEYS=<key1,key2>
+existingSecret: ""
+
+# Extra environment variables (non-secret). Secrets go in existingSecret.
+env:
+  FINOPS_ENVIRONMENT: production
+  FINOPS_LOG_LEVEL: INFO
+  FINOPS_COST_REPORTS_DIR: /cost-reports
+  # Override below for LLM integration:
+  # FINOPS_LLM_PROVIDER: watsonx
+  # FINOPS_WATSONX_URL: https://us-south.ml.cloud.ibm.com
+  # FINOPS_WATSONX_MODEL_ID: ibm/granite-3-8b-instruct
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: finops-copilot.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 5Gi
+
+# Cost reports volume — use a PVC that already contains IBM Cloud Logs usage exports.
+costReports:
+  enabled: false
+  claimName: ""  # existing PVC with cost reports
+  mountPath: /cost-reports
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+# Pod security — non-root, drop all capabilities
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false   # ChromaDB writes to /data
+
+# Downward API: inject pod IP so the entrypoint can bind to it (not 0.0.0.0).
+podAnnotations: {}
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 20
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 10
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

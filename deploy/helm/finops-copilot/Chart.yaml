@@ -1,0 +1,14 @@
+apiVersion: v2
+name: finops-copilot
+description: IBM Cloud Logs FinOps Copilot — RAG-powered logging cost analyser
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - finops
+  - ibm-cloud-logs
+  - observability
+  - rag
+home: ""
+maintainers:
+  - name: finops-team

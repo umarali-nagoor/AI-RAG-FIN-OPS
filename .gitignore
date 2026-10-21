@@ -1,0 +1,33 @@
+# secrets / env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# runtime data
+backend/data/
+data/
+.workdir/
+
+# node
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# generated sample git repos (recreate with scripts/init_sample_repos.sh)
+sample-data/repos/*/.git/

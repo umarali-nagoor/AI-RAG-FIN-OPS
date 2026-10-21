@@ -1,0 +1,12 @@
+fastapi==0.148.0
+uvicorn[standard]==0.54.0
+pydantic-settings==2.16.0
+chromadb==1.5.9
+tree-sitter==0.26.0
+tree-sitter-go==0.25.0
+tree-sitter-java==0.23.5
+tree-sitter-python==0.25.0
+GitPython==3.2.1
+openai==3.35.1
+httpx==0.28.1
+PyYAML==6.0.3

@@ -1,0 +1,47 @@
+# IBM Cloud Logs application → repository mapping
+#
+# Run a dry-run first to discover your application/subsystem names:
+#   python scripts/sync_cost_reports.py --instance-id <GUID> --region <REGION> --dry-run
+#
+# The 'subsytem' field (IBM API typo) maps to the service/container name.
+# 'application' is typically the Kubernetes namespace or IBM service name.
+#
+# NOTE: If your instance contains IBM-managed infrastructure logs, the
+# application will be 'ibm-platform-logs'. Application pod logs will show
+# your own namespace as the application name.
+
+applications:
+  # -- IBM-managed infrastructure services (platform logs instance) -----------
+  # Replace the subsystem values below with what the dry-run shows for your instance.
+  # Format: <service-type>:<instance-guid>
+  - icl_application: "ibm-platform-logs"
+    icl_subsystem:   "schematics:<YOUR-SCHEMATICS-INSTANCE-GUID>"
+    repository:      "schematics-platform"
+
+  - icl_application: "ibm-platform-logs"
+    icl_subsystem:   "databases-for-postgresql:<YOUR-PG-INSTANCE-GUID>"
+    repository:      "postgresql-platform"
+
+  - icl_application: "ibm-platform-logs"
+    icl_subsystem:   "messages-for-rabbitmq:<YOUR-RABBITMQ-INSTANCE-GUID>"
+    repository:      "rabbitmq-platform"
+
+  - icl_application: "ibm-platform-logs"
+    icl_subsystem:   "cloudantnosqldb:<YOUR-CLOUDANT-INSTANCE-GUID>"
+    repository:      "cloudant-platform"
+
+  - icl_application: "ibm-platform-logs"
+    icl_subsystem:   "databases-for-redis:<YOUR-REDIS-INSTANCE-GUID>"
+    repository:      "redis-platform"
+
+  - icl_application: "ibm-platform-logs"
+    icl_subsystem:   "secrets-manager:<YOUR-SM-INSTANCE-GUID>"
+    repository:      "secrets-manager-platform"
+
+  # -- Application services (application logs instance) ----------------------
+  # When your Kubernetes pods send logs, they appear with your namespace
+  # as 'application' and deployment name as 'subsytem'. Example:
+  #
+  # - icl_application: "schematics-prod"
+  #   icl_subsystem:   "schematics-api"
+  #   repository:      "schematics-api"

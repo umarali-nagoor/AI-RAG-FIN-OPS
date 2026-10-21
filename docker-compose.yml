@@ -1,0 +1,51 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml — local development / smoke-testing only
+#
+# Production deployments use the Helm chart (deploy/helm/).
+# Never bind to 0.0.0.0; the container entrypoint picks up its own IP.
+# Secrets must be passed via environment variables or a .env file, never
+# committed to version control.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  finops-copilot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: finops-copilot:local
+    # Publish only on localhost; override with FINOPS_HOST_PORT if you need
+    # to reach it from another machine on the same subnet.
+    ports:
+      - "${FINOPS_HOST_PORT:-127.0.0.1:8080}:8080"
+    volumes:
+      # Mount cost reports from the host for local dev; remove in prod
+      - ./sample-data/cost-reports:/cost-reports:ro
+      # Persistent ChromaDB store
+      - finops-data:/data
+    environment:
+      FINOPS_ENVIRONMENT: development
+      FINOPS_COST_REPORTS_DIR: /cost-reports
+      FINOPS_LOG_LEVEL: INFO
+      # Pass secrets via .env (never commit secrets):
+      #   FINOPS_API_KEYS=...
+      #   FINOPS_OPENAI_API_KEY=...
+      #   FINOPS_WATSONX_API_KEY=...
+      #   FINOPS_WATSONX_PROJECT_ID=...
+    env_file:
+      - path: .env
+        required: false
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    read_only: false   # ChromaDB writes to /data
+    cap_drop:
+      - ALL
+
+volumes:
+  finops-data:

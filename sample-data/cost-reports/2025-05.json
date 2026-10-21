@@ -1,0 +1,17 @@
+{
+  "period": "2025-05",
+  "total_usd_month": 15900,
+  "notes": "Synthetic sample data derived from IBM Cloud Logs data usage metrics. Replace with a real export.",
+  "services": {
+    "schematics-api":               {"gb_per_day": 205, "usd_month": 3900, "by_severity_gb_day": {"INFO": 150, "ERROR": 35, "WARNING": 20}},
+    "schematics-orchestrator":      {"gb_per_day": 150, "usd_month": 3900, "by_severity_gb_day": {"INFO": 50, "ERROR": 90, "WARNING": 10}},
+    "schematics-job-queue-manager": {"gb_per_day": 110, "usd_month": 1900, "by_severity_gb_day": {"INFO": 100, "ERROR": 5, "WARNING": 5}},
+    "schematics-agents-api":        {"gb_per_day": 55,  "usd_month": 1100, "by_severity_gb_day": {"INFO": 30, "ERROR": 22, "WARNING": 3}},
+    "schematics-data-job":          {"gb_per_day": 60,  "usd_month": 1100, "by_severity_gb_day": {"INFO": 58, "ERROR": 1, "WARNING": 1}},
+    "blueprint-api":                {"gb_per_day": 30,  "usd_month": 550,  "by_severity_gb_day": {"INFO": 25, "ERROR": 3, "WARNING": 2}},
+    "schematics-job":               {"gb_per_day": 40,  "usd_month": 700,  "by_severity_gb_day": {"INFO": 37, "ERROR": 2, "WARNING": 1}},
+    "schematics-sandbox":           {"gb_per_day": 25,  "usd_month": 450,  "by_severity_gb_day": {"INFO": 22, "ERROR": 2, "WARNING": 1}},
+    "schematics-ansible":           {"gb_per_day": 30,  "usd_month": 550,  "by_severity_gb_day": {"INFO": 26, "ERROR": 3, "WARNING": 1}},
+    "schematics-mon":               {"gb_per_day": 20,  "usd_month": 250,  "by_severity_gb_day": {"INFO": 5, "ERROR": 2, "WARNING": 13}}
+  }
+}

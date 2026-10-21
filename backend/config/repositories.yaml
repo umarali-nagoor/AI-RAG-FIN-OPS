@@ -1,0 +1,46 @@
+# Allow-list of repositories the copilot may analyse.
+#
+# Two ways to register repositories:
+#
+# 1. repositories: — explicit entries with local path OR full HTTPS clone URL.
+#      path: local checkout (relative paths are resolved from this file's directory)
+#      url:  https clone URL (checked out under FINOPS_DATA_DIR/repos)
+#            credentials come from FINOPS_GIT_TOKEN (http.extraHeader — never embedded in URL)
+#
+# 2. github_repos: — shorthand blocks.  Specify an org and the exact repo names you want.
+#      The copilot builds the URL as https://github.com/{org}/{repo} for each entry.
+#      Repositories listed under `repositories:` above take precedence (not duplicated).
+#      Each repo entry can be a plain name string or an object with name/description/branch.
+#
+# Example github_repos block (uncomment and fill in):
+# github_repos:
+#   - org: my-github-org
+#     repos:
+#       - repo-alpha
+#       - repo-beta
+#       - name: repo-gamma
+#         description: "Custom description"
+#         branch: develop
+
+repositories:
+  - {name: blueprint-api,               description: Blueprint catalogue API,                 path: ../../sample-data/repos/blueprint-api}
+  - {name: schematics-api,              description: Public Schematics REST API,              path: ../../sample-data/repos/schematics-api}
+  - {name: schematics-agents-api,       description: API used by Schematics agents,           path: ../../sample-data/repos/schematics-agents-api}
+  - {name: schematics-orchestrator,     description: Job orchestration service,               path: ../../sample-data/repos/schematics-orchestrator}
+  - {name: schematics-sandbox,          description: Sandbox lifecycle manager,               path: ../../sample-data/repos/schematics-sandbox}
+  - {name: schematics-data-job,         description: Nightly data export job,                 path: ../../sample-data/repos/schematics-data-job}
+  - {name: schematics-job-queue-manager, description: Kafka job queue consumer and scheduler,  path: ../../sample-data/repos/schematics-job-queue-manager}
+  - {name: schematics-job,              description: Single Terraform job runner,             path: ../../sample-data/repos/schematics-job}
+  - {name: schematics-ansible,          description: Ansible runner wrapper,                  path: ../../sample-data/repos/schematics-ansible}
+  - {name: schematics-mon,              description: Health metrics collector,                path: ../../sample-data/repos/schematics-mon}
+  # GitHub-hosted sample repo for PR Review testing.
+  - name: ai-rag-pr-sample
+    description: "AI RAG pipeline — FinOps PR Review sample (local)"
+    path: ../../sample-data/repos/ai-rag-pr-sample
+
+# To scan specific repos from a GitHub org, use github_repos instead of listing full URLs:
+# github_repos:
+#   - org: umarali-nagoor
+#     repos:
+#       - AI-RAG-PR-SAMPLE
+#       - schematics-api
